@@ -289,7 +289,7 @@
     </div>
     <div class="print-actions">
       <button class="p-btn-cancel" onclick="closePrint()">✕ Fechar</button>
-      <button class="p-btn-print" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+      <button class="p-btn-print" onclick="doPrint()">🖨️ Imprimir / Salvar PDF</button>
     </div>
   </div>
 </div>
@@ -572,6 +572,31 @@
   ['f-balc','f-med','f-client'].forEach(id => {
     document.getElementById(id)?.addEventListener('keydown', e => { if(e.key==='Enter') addRecord(); });
   });
+
+  function doPrint() {
+    const conteudo = document.getElementById('print-modal').querySelector('.print-box-scroll').innerHTML;
+    const estilos = Array.from(document.styleSheets).map(ss => {
+      try { return Array.from(ss.cssRules).map(r => r.cssText).join('\n'); } catch(e) { return ''; }
+    }).join('\n');
+    const janela = window.open('', '_blank', 'width=900,height=700');
+    janela.document.write(`<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>FarmaControle — Relatório</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; background: white; color: #1a1a2e; padding: 20px 36px; }
+  ${estilos}
+  @page { margin: 10mm; }
+</style>
+</head>
+<body>${conteudo}</body>
+</html>`);
+    janela.document.close();
+    janela.onload = function() { janela.focus(); janela.print(); janela.close(); };
+  }
 
   tryRestoreSession();
 </script>
