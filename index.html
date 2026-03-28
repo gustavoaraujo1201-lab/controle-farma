@@ -575,11 +575,7 @@
 
   function doPrint() {
     const conteudo = document.getElementById('print-modal').querySelector('.print-box-scroll').innerHTML;
-    const estilos = Array.from(document.styleSheets).map(ss => {
-      try { return Array.from(ss.cssRules).map(r => r.cssText).join('\n'); } catch(e) { return ''; }
-    }).join('\n');
-    const janela = window.open('', '_blank', 'width=900,height=700');
-    janela.document.write(`<!DOCTYPE html>
+    const html = `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -588,14 +584,36 @@
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Inter', sans-serif; background: white; color: #1a1a2e; padding: 20px 36px; }
-  ${estilos}
+  .p-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #1a1a2e; padding-bottom: 12px; margin-bottom: 16px; }
+  .p-title { font-family: 'Nunito', sans-serif; font-size: 22px; font-weight: 800; }
+  .p-sub { font-size: 12px; color: #666; margin-top: 4px; }
+  .p-meta { text-align: right; font-size: 12px; color: #666; line-height: 1.7; }
+  .p-summary { display: flex; gap: 14px; margin-bottom: 16px; }
+  .p-sum-item { flex: 1; border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px 16px; text-align: center; }
+  .p-sum-num { font-family: 'Nunito', sans-serif; font-size: 26px; font-weight: 800; }
+  .p-sum-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+  .num-total { color: #1a1a2e; } .num-pend { color: #c0392b; } .num-rec { color: #1a7a57; } .num-post { color: #d4880a; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  thead th { background: #1a1a2e; color: #fff; padding: 10px; text-align: left; font-family: 'Nunito', sans-serif; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+  tbody tr:nth-child(even) { background: #f5f6f9; }
+  tbody tr { border-bottom: 1px solid #e8e8e8; }
+  tbody td { padding: 9px 10px; color: #333; vertical-align: middle; }
+  .p-badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+  .p-badge-pend { background: #fde8ea; color: #c0392b; }
+  .p-badge-rec  { background: #d4f5eb; color: #1a7a57; }
+  .p-badge-post { background: #fef3e2; color: #d4880a; font-size: 10px; display: block; margin-top: 3px; }
+  .p-footer { margin-top: 24px; border-top: 1px solid #ddd; padding-top: 14px; font-size: 11px; color: #aaa; display: flex; justify-content: space-between; }
   @page { margin: 10mm; }
 </style>
 </head>
 <body>${conteudo}</body>
-</html>`);
-    janela.document.close();
-    janela.onload = function() { janela.focus(); janela.print(); janela.close(); };
+</html>`;
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const janela = window.open(url, '_blank');
+    janela.onload = function() {
+      setTimeout(() => { janela.print(); URL.revokeObjectURL(url); }, 500);
+    };
   }
 
   tryRestoreSession();
