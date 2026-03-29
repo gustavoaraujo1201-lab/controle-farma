@@ -154,6 +154,36 @@
   .p-btn-print { background: #1a1a2e; border: none; border-radius: 8px; padding: 10px 22px; font-size: 13px; cursor: pointer; font-family: 'Nunito', sans-serif; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 7px; }
   .p-btn-print:hover { background: #2e3050; }
 
+
+  /* MULTI-ITEM / OBS */
+  .btn-expand { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 13px; padding: 3px 6px; border-radius: 6px; transition: all 0.2s; line-height: 1; }
+  .btn-expand:hover { background: var(--surface2); color: var(--accent); }
+  .sub-rows { display: none; }
+  .sub-rows.open { display: table-row-group; }
+  .sub-row td { padding: 6px 14px 6px 28px !important; background: rgba(255,255,255,0.02); border-bottom: none !important; font-size: 12px; }
+  .sub-row td.sub-med { color: #7ea8d4; }
+  .sub-row:last-child td { border-bottom: 1px solid var(--border) !important; padding-bottom: 10px !important; }
+  .tag-item { display: inline-block; background: rgba(79,209,165,0.08); border: 1px solid rgba(79,209,165,0.2); border-radius: 6px; padding: 1px 8px; font-size: 11px; color: var(--accent); margin-right: 4px; }
+  .obs-cell { max-width: 200px; }
+  .obs-text { font-size: 11px; color: var(--muted); font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; display: block; }
+  .obs-empty { font-size: 11px; color: var(--border); cursor: pointer; }
+  .obs-empty:hover { color: var(--muted); }
+  .inline-obs { background: transparent; border: none; border-bottom: 1px dashed var(--border); color: var(--muted); font-size: 11px; font-family: 'Inter', sans-serif; outline: none; width: 100%; padding: 2px 0; font-style: italic; }
+  .inline-obs:focus { border-color: var(--accent); color: var(--text); }
+  /* Form items list */
+  .items-list { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+  .item-row { display: flex; gap: 8px; align-items: center; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; }
+  .item-row span { flex: 1; font-size: 13px; color: var(--text); }
+  .btn-rm-item { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 14px; padding: 2px 6px; border-radius: 4px; }
+  .btn-rm-item:hover { color: var(--red); }
+  .btn-add-item { background: rgba(79,209,165,0.08); border: 1px dashed rgba(79,209,165,0.3); border-radius: 8px; padding: 7px 14px; color: var(--accent); font-size: 13px; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s; margin-top: 4px; }
+  .btn-add-item:hover { background: rgba(79,209,165,0.15); }
+  .form-obs { margin-top: 12px; }
+  .form-obs input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; outline: none; transition: border 0.2s; }
+  .form-obs input:focus { border-color: var(--accent); }
+  .form-obs input::placeholder { color: var(--muted); }
+  .form-obs label { display: block; font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 7px; text-transform: uppercase; letter-spacing: 0.5px; }
+
   @media print {
     body > *:not(.print-modal) { display: none !important; }
     .print-modal { display: block !important; position: static; background: white; }
@@ -223,10 +253,21 @@
       <div class="card-title">Adicionar Registro</div>
       <div class="form-grid">
         <div class="field"><label>Balconista</label><input id="f-balc" type="text" placeholder="Nome do balconista"></div>
-        <div class="field"><label>Medicamento / Descrição</label><input id="f-med" type="text" placeholder="Ex: Dorflex 36 cpr"></div>
+        <div class="field">
+          <label>Medicamento / Descrição</label>
+          <div style="display:flex;gap:8px">
+            <input id="f-med" type="text" placeholder="Ex: Dorflex 36 cpr" style="flex:1">
+            <button type="button" class="btn-add-item" onclick="addItemToList()" style="white-space:nowrap;margin-top:0;padding:11px 14px">+ Item</button>
+          </div>
+          <div class="items-list" id="items-list"></div>
+        </div>
         <div class="field"><label>Cliente</label><input id="f-client" type="text" placeholder="Nome do cliente"></div>
         <div class="field"><label>Data da Venda</label><input id="f-date" type="date"></div>
         <div class="field"><label>&nbsp;</label><button class="btn-add" id="btn-add" onclick="addRecord()">+ Adicionar</button></div>
+        <div class="form-obs" style="grid-column:1/-1">
+          <label>Observação / Justificativa</label>
+          <input id="f-obs" type="text" placeholder="Ex: Cliente disse que busca na sexta...">
+        </div>
       </div>
     </div>
 
@@ -247,7 +288,7 @@
         <thead>
           <tr>
             <th>#</th><th>Balconista</th><th>Medicamento / Descrição</th>
-            <th>Cliente</th><th>Data Venda / Postergada</th><th>Status</th><th></th>
+            <th>Cliente</th><th>Observação</th><th>Data Venda / Postergada</th><th>Status</th><th></th>
           </tr>
         </thead>
         <tbody id="tbody"></tbody>
@@ -279,7 +320,7 @@
         <div class="p-sum-item"><div class="p-sum-num num-rec" id="p-rec">0</div><div class="p-sum-label">Recebidos</div></div>
       </div>
       <table>
-        <thead><tr><th>#</th><th>Balconista</th><th>Medicamento</th><th>Cliente</th><th>Data Venda</th><th>Postergada</th><th>Status</th></tr></thead>
+        <thead><tr><th>#</th><th>Balconista</th><th>Medicamento(s)</th><th>Cliente</th><th>Observação</th><th>Data Venda</th><th>Postergada</th><th>Status</th></tr></thead>
         <tbody id="p-tbody"></tbody>
       </table>
       <div class="p-footer">
@@ -417,7 +458,7 @@
   async function loadRecords() {
     try {
       const data = await sbGet();
-      records = data.map(r => ({ id: r.id, balc: r.balconista, med: r.medicamento, client: r.cliente, date: r.data_venda, datePost: r.data_postergada, status: r.status }));
+      records = data.map(r => ({ id: r.id, balc: r.balconista, med: r.medicamento, client: r.cliente, date: r.data_venda, datePost: r.data_postergada, status: r.status, obs: r.observacao||'', itens: r.itens||[] }));
       render();
     } catch(e) {
       showToast('Erro ao carregar dados.', true); console.error(e);
@@ -435,13 +476,19 @@
     const btn = document.getElementById('btn-add');
     btn.disabled = true; btn.textContent = 'Salvando...';
     try {
-      const ins = await sbInsert({ balconista: balc, medicamento: med, cliente: client, status: 'pendente', data_venda: dateVal || toInputDate(new Date()), data_postergada: null });
-      records.push({ id: ins[0].id, balc, med, client, status: 'pendente', date: ins[0].data_venda, datePost: null });
+      const obs = document.getElementById('f-obs').value.trim();
+      const allItems = [...pendingItems];
+      if (allItems.length === 0) { showToast('Adicione pelo menos 1 item!'); btn.disabled=false; btn.textContent='+ Adicionar'; return; }
+      const medPrincipal = allItems[0];
+      const ins = await sbInsert({ balconista: balc, medicamento: medPrincipal, cliente: client, status: 'pendente', data_venda: dateVal || toInputDate(new Date()), data_postergada: null, observacao: obs, itens: allItems });
+      records.push({ id: ins[0].id, balc, med: medPrincipal, client, status: 'pendente', date: ins[0].data_venda, datePost: null, obs, itens: allItems });
       render();
       document.getElementById('f-balc').value = '';
       document.getElementById('f-med').value  = '';
       document.getElementById('f-client').value = '';
       document.getElementById('f-date').value = toInputDate(new Date());
+      document.getElementById('f-obs').value = '';
+      pendingItems = []; renderItemsList();
       showToast('✅ Registro adicionado!');
     } catch(e) { showToast('Erro ao salvar.', true); console.error(e); }
     finally { btn.disabled = false; btn.textContent = '+ Adicionar'; }
@@ -469,6 +516,12 @@
     try { await sbUpdate(id, { data_postergada: null }); render(); showToast('Data postergada removida.'); }
     catch(e) { showToast('Erro ao remover.', true); }
   }
+  async function updateObs(id, val) {
+    const r = records.find(x => x.id === id); if (!r) return;
+    r.obs = val;
+    try { await sbUpdate(id, { observacao: val }); } catch(e) {}
+  }
+
   async function toggleStatus(id) {
     const r = records.find(x => x.id === id); if (!r) return;
     const ns = r.status === 'pendente' ? 'recebido' : 'pendente';
@@ -505,10 +558,18 @@
       empty.style.display = 'none';
       tbody.innerHTML = filtered.map((r, i) => `
         <tr>
-          <td style="color:var(--muted);font-size:12px">${i+1}</td>
+          <td style="color:var(--muted);font-size:12px">
+            ${(r.itens && r.itens.length > 1) ? `<button class="btn-expand" onclick="toggleSubRows('${r.id}')" title="Ver todos os itens">▶ ${r.itens.length}</button>` : i+1}
+          </td>
           <td class="cell-balc">${esc(r.balc)}</td>
-          <td class="cell-med">${esc(r.med)}</td>
+          <td class="cell-med">
+            ${esc(r.itens && r.itens.length > 0 ? r.itens[0] : r.med)}
+            ${r.itens && r.itens.length > 1 ? `<span class="tag-item">+${r.itens.length-1}</span>` : ''}
+          </td>
           <td class="cell-name">${esc(r.client)}</td>
+          <td class="obs-cell">
+            <input class="inline-obs" value="${esc(r.obs||'')}" placeholder="Adicionar obs..." onchange="updateObs('${r.id}', this.value)" title="${esc(r.obs||'')}">
+          </td>
           <td>
             <div class="date-cell">
               <div class="date-venda"><input type="date" value="${r.date}" onchange="updateDate('${r.id}', this.value)"></div>
@@ -521,7 +582,18 @@
           </td>
           <td><button class="badge badge-${r.status}" onclick="toggleStatus('${r.id}')">${r.status === 'pendente' ? '🔴 Pendente' : '🟢 Recebido'}</button></td>
           <td><button class="btn-del" onclick="deleteRecord('${r.id}')" ${!isAdmin ? 'disabled title="Apenas admin pode deletar"' : ''}>🗑</button></td>
-        </tr>`).join('');
+        </tr>
+        ${(r.itens && r.itens.length > 1) ? `
+        <tbody class="sub-rows" id="sub-${r.id}">
+          ${r.itens.slice(1).map(item => `
+          <tr class="sub-row">
+            <td></td>
+            <td></td>
+            <td class="sub-med">↳ ${esc(item)}</td>
+            <td colspan="5"></td>
+          </tr>`).join('')}
+        </tbody>` : ''}
+        `).join('');
     }
     const total = records.length, pend = records.filter(r=>r.status==='pendente').length, rec = records.filter(r=>r.status==='recebido').length;
     document.getElementById('stat-total').textContent = `${total} registro${total!==1?'s':''}`;
@@ -553,6 +625,7 @@
       <tr>
         <td>${i+1}</td><td>${esc(r.balc)}</td><td>${esc(r.med)}</td>
         <td><strong>${esc(r.client)}</strong></td>
+        <td style="font-size:11px;color:#888;font-style:italic">${esc(r.obs||'—')}</td>
         <td>${fromInputDate(r.date)}</td>
         <td>${r.datePost?`<span style="color:#d4880a;font-weight:600">${fromInputDate(r.datePost)}</span>`:'<span style="color:#bbb">—</span>'}</td>
         <td>
@@ -569,9 +642,9 @@
     if (e.key==='Escape') closePrint();
     if (e.key==='Enter' && document.getElementById('login-screen').classList.contains('visible')) doLogin();
   });
-  ['f-balc','f-med','f-client'].forEach(id => {
-    document.getElementById(id)?.addEventListener('keydown', e => { if(e.key==='Enter') addRecord(); });
-  });
+  document.getElementById('f-balc')?.addEventListener('keydown', e => { if(e.key==='Enter') addRecord(); });
+  document.getElementById('f-client')?.addEventListener('keydown', e => { if(e.key==='Enter') addRecord(); });
+  document.getElementById('f-med')?.addEventListener('keydown', e => { if(e.key==='Enter') { e.preventDefault(); addItemToList(); } });
 
   function doPrint() {
     const conteudo = document.getElementById('print-modal').querySelector('.print-box-scroll').innerHTML;
@@ -614,6 +687,42 @@
     janela.onload = function() {
       setTimeout(() => { janela.print(); URL.revokeObjectURL(url); }, 500);
     };
+  }
+
+
+  // ── MULTI-ITEM HELPERS ──
+  let pendingItems = [];
+
+  function addItemToList() {
+    const val = document.getElementById('f-med').value.trim();
+    if (!val) { showToast('Digite o medicamento primeiro!'); return; }
+    pendingItems.push(val);
+    document.getElementById('f-med').value = '';
+    renderItemsList();
+  }
+
+  function removeItem(idx) {
+    pendingItems.splice(idx, 1);
+    renderItemsList();
+  }
+
+  function renderItemsList() {
+    const el = document.getElementById('items-list');
+    if (pendingItems.length === 0) { el.innerHTML = ''; return; }
+    el.innerHTML = pendingItems.map((item, i) => `
+      <div class="item-row">
+        <span>${esc(item)}</span>
+        <button class="btn-rm-item" onclick="removeItem(${i})">✕</button>
+      </div>`).join('');
+  }
+
+  function toggleSubRows(id) {
+    const el = document.getElementById('sub-' + id);
+    if (!el) return;
+    el.classList.toggle('open');
+    // flip arrow
+    const btn = document.querySelector(`button[onclick="toggleSubRows('${id}')"]`);
+    if (btn) btn.textContent = el.classList.contains('open') ? ('▼ ' + (el.querySelectorAll('tr').length + 1)) : ('▶ ' + (el.querySelectorAll('tr').length + 1));
   }
 
   tryRestoreSession();
