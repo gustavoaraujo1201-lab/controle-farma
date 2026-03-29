@@ -246,8 +246,19 @@
       // Supabase admin signup via anon — creates user
       const res=await fetch(`${SUPABASE_URL}/auth/v1/signup`,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY},body:JSON.stringify({email,password:pass})});
       const data=await res.json();
-      if(!res.ok)throw new Error(data.msg||data.error_description||'Erro');
+      if(!res.ok)throw new Error(data.msg||data.error_description||'Erro ao criar usuário');
       showToast(`✅ Usuário ${email} criado com sucesso!`);
-      document.getElementById('new-email').value='';document.getElementById('new-pass').value='';
+      document.getElementById('new-email').value='';
+      document.getElementById('new-pass').value='';
     }catch(e){showToast('Erro: '+e.message,true);}
-    finally{btn.disa
+    finally{btn.disabled=false;btn.textContent='+ Convidar';}
+  }
+
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Enter'&&document.getElementById('login-screen').classList.contains('visible'))doLogin();
+  });
+
+  tryRestoreSession();
+</script>
+</body>
+</html>
