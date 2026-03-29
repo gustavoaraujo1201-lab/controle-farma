@@ -441,13 +441,16 @@
     loadRecords();
   }
 
-  async function tryRestoreSession(){
+    async function tryRestoreSession(){
     const token=sessionStorage.getItem('fc_token');
     const user=sessionStorage.getItem('fc_user');
     if(token&&user){
       try{
-        const res=await fetch(`${SUPABASE_URL}/auth/v1/user`,{headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${token}`}});
-        if(res.ok){authToken=token;currentUser=JSON.parse(user);isAdmin=currentUser.email===ADMIN_EMAIL;showApp();return;}
+        authToken=token;
+        currentUser=JSON.parse(user);
+        isAdmin=currentUser.email===ADMIN_EMAIL;
+        showApp();
+        return;
       }catch(e){}
     }
     document.getElementById('loading-overlay').style.display='none';
