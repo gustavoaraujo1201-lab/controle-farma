@@ -413,7 +413,7 @@
       if(!res.ok||!data.access_token)throw new Error();
       authToken=data.access_token;currentUser=data.user;isAdmin=currentUser.email===ADMIN_EMAIL;
       sessionStorage.setItem('fc_token',authToken);sessionStorage.setItem('fc_user',JSON.stringify(currentUser));
-      showApp();
+      window.location.href='dashboard.html';
     }catch(e){showLoginError('E-mail ou senha incorretos.');}
     finally{btn.disabled=false;btn.textContent='Entrar';}
   }
