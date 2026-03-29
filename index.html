@@ -123,6 +123,15 @@
   .btn-drawer-save:hover{opacity:.9;transform:translateY(-1px);}
   .btn-drawer-save:disabled{opacity:.5;cursor:not-allowed;transform:none;}
 
+
+  /* === BOTÃO EDITAR === */
+  .btn-edit{background:none;border:none;color:var(--muted);cursor:pointer;padding:5px 7px;border-radius:6px;font-size:14px;transition:color .2s,background .2s;}
+  .btn-edit:hover{color:var(--accent);background:rgba(79,209,165,.1);}
+
+  /* === DRAWER MODO EDIÇÃO === */
+  .drawer-header.edit-mode{border-bottom-color:rgba(79,209,165,.3);}
+  .drawer-title.edit-mode{color:var(--accent);}
+  .btn-drawer-save.edit-mode{background:linear-gradient(135deg,#4a9eff,#2e7fd4);box-shadow:0 4px 16px rgba(74,158,255,.2);}
   /* === SEPARADOR === */
   .dsep{height:1px;background:var(--border);margin:20px 0;}
 
@@ -298,10 +307,10 @@
 
 <!-- DRAWER PANEL -->
 <div class="drawer" id="drawer">
-  <div class="drawer-header">
+  <div class="drawer-header" id="drawer-header">
     <div>
-      <div class="drawer-title">&#128138; Novo Registro</div>
-      <div class="drawer-subtitle">Preencha os dados da pend&#234;ncia</div>
+      <div class="drawer-title" id="drawer-title">&#128138; Novo Registro</div>
+      <div class="drawer-subtitle" id="drawer-subtitle">Preencha os dados da pend&#234;ncia</div>
     </div>
     <button class="drawer-close" onclick="closeDrawer()">&#x2715;</button>
   </div>
@@ -349,7 +358,7 @@
 
   <div class="drawer-footer">
     <button class="btn-drawer-cancel" onclick="closeDrawer()">Cancelar</button>
-    <button class="btn-drawer-save" id="btn-add" onclick="addRecord()">&#x2713; Salvar Registro</button>
+    <button class="btn-drawer-save" id="btn-add" onclick="saveDrawer()">&#x2713; Salvar Registro</button>
   </div>
 </div>
 
@@ -481,7 +490,7 @@
       pendingItems=[];renderItemsList();
       showToast('✅ Registro adicionado!');closeDrawer();
     }catch(e){showToast('Erro ao salvar: '+e.message,true);}
-    finally{btn.disabled=false;btn.textContent='+ Adicionar';}
+    finally{btn.disabled=false;btn.textContent='✓ Salvar Registro';}
   }
 
   function addItemToList(){
@@ -565,7 +574,10 @@
             </div>
           </td>
           <td><button class="badge badge-${r.status}" onclick="toggleStatus('${r.id}')">${r.status==='pendente'?'🔴 Pendente':'🟢 Recebido'}</button></td>
-          <td><button class="btn-del" onclick="deleteRecord('${r.id}')" ${!isAdmin?'disabled title="Apenas admin"':''}>🗑</button></td>
+          <td style="display:flex;gap:4px;align-items:center;">
+            <button class="btn-edit" onclick="openEditDrawer('${r.id}')" title="Editar registro">✏️</button>
+            <button class="btn-del" onclick="deleteRecord('${r.id}')" ${!isAdmin?'disabled title="Apenas admin"':''}>🗑</button>
+          </td>
         </tr>
         ${(r.itens&&r.itens.length>1)?`<tbody class="sub-rows" id="sub-${r.id}">${r.itens.slice(1).map(item=>`<tr class="sub-row"><td></td><td></td><td class="sub-med">↳ ${esc(item)}</td><td colspan="5"></td></tr>`).join('')}</tbody>`:''}`
       ).join('');
@@ -614,17 +626,83 @@
   document.getElementById('f-client')?.addEventListener('keydown',e=>{if(e.key==='Enter')addRecord();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape'){closePrint();closeDrawer();}if(e.key==='Enter'&&document.getElementById('login-screen').classList.contains('visible'))doLogin();});
 
+  let editingId = null;
+
   function openDrawer(){
+    editingId = null;
+    // Reset modo novo
+    document.getElementById('drawer-title').textContent = '💊 Novo Registro';
+    document.getElementById('drawer-subtitle').textContent = 'Preencha os dados da pendência';
+    document.getElementById('btn-add').textContent = '✓ Salvar Registro';
+    document.getElementById('btn-add').className = 'btn-drawer-save';
+    document.getElementById('drawer-header').className = 'drawer-header';
+    // Limpar campos
+    ['f-balc','f-med','f-client','f-obs'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('f-date').value = toInputDate(new Date());
+    pendingItems = []; renderItemsList();
     document.getElementById('drawer').classList.add('open');
     document.getElementById('drawer-overlay').classList.add('open');
     document.body.style.overflow='hidden';
     setTimeout(()=>document.getElementById('f-balc').focus(),350);
   }
 
+  function openEditDrawer(id){
+    const r = records.find(x=>x.id===id);
+    if(!r) return;
+    editingId = id;
+    // Modo edição
+    document.getElementById('drawer-title').textContent = '✏️ Editar Registro';
+    document.getElementById('drawer-subtitle').textContent = 'Altere os dados e salve';
+    document.getElementById('btn-add').textContent = '✓ Salvar Alterações';
+    document.getElementById('btn-add').className = 'btn-drawer-save edit-mode';
+    document.getElementById('drawer-header').className = 'drawer-header edit-mode';
+    // Preencher campos com dados existentes
+    document.getElementById('f-balc').value = r.balc;
+    document.getElementById('f-client').value = r.client;
+    document.getElementById('f-date').value = r.date;
+    document.getElementById('f-obs').value = r.obs || '';
+    document.getElementById('f-med').value = '';
+    pendingItems = r.itens && r.itens.length > 0 ? [...r.itens] : (r.med ? [r.med] : []);
+    renderItemsList();
+    document.getElementById('drawer').classList.add('open');
+    document.getElementById('drawer-overlay').classList.add('open');
+    document.body.style.overflow='hidden';
+    setTimeout(()=>document.getElementById('f-balc').focus(),350);
+  }
+
+  function saveDrawer(){
+    if(editingId) updateRecord();
+    else addRecord();
+  }
+
+  async function updateRecord(){
+    const balc = document.getElementById('f-balc').value.trim();
+    const med  = document.getElementById('f-med').value.trim();
+    const client = document.getElementById('f-client').value.trim();
+    const dateVal = document.getElementById('f-date').value;
+    const obs = document.getElementById('f-obs').value.trim();
+    if(!balc||!client){showToast('Preencha balconista e cliente!');return;}
+    if(med && !pendingItems.includes(med)) pendingItems.push(med);
+    if(pendingItems.length===0){showToast('Adicione pelo menos 1 medicamento!');return;}
+    const btn = document.getElementById('btn-add');
+    btn.disabled=true; btn.textContent='Salvando...';
+    try{
+      const allItems = [...pendingItems];
+      await sbUpdate(editingId,{balconista:balc,medicamento:allItems[0],cliente:client,data_venda:dateVal,observacao:obs,itens:allItems});
+      const r = records.find(x=>x.id===editingId);
+      if(r){r.balc=balc;r.med=allItems[0];r.client=client;r.date=dateVal;r.obs=obs;r.itens=allItems;}
+      render();
+      showToast('✅ Registro atualizado!');
+      closeDrawer();
+    }catch(e){showToast('Erro ao atualizar: '+e.message,true);}
+    finally{btn.disabled=false; btn.textContent='✓ Salvar Alterações';}
+  }
+
   function closeDrawer(){
     document.getElementById('drawer').classList.remove('open');
     document.getElementById('drawer-overlay').classList.remove('open');
     document.body.style.overflow='';
+    editingId = null;
   }
 
     tryRestoreSession();
