@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FarmaControle — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  :root{--bg:#0f1117;--surface:#181c27;--surface2:#1f2535;--border:#2a3045;--accent:#4fd1a5;--accent2:#3bb88e;--red:#f05c6e;--orange:#f5a623;--green:#4fd1a5;--text:#e8eaf2;--muted:#7880a0;--white:#fff;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;display:flex;flex-direction:column;}
+  #loading-overlay{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:16px;}
+  .spin{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  #loading-overlay p{color:var(--muted);font-size:14px;}
+  #login-screen{display:none;position:fixed;inset:0;background:var(--bg);align-items:center;justify-content:center;z-index:500;}
+  #login-screen.visible{display:flex;}
+  .login-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:44px 40px;width:100%;max-width:400px;box-shadow:0 24px 64px rgba(0,0,0,.5);}
+  .login-logo{display:flex;align-items:center;gap:12px;margin-bottom:32px;justify-content:center;}
+  .login-logo-icon{width:44px;height:44px;background:linear-gradient(135deg,var(--accent),#2e9e7b);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;}
+  .login-logo-text{font-family:'Nunito',sans-serif;font-size:26px;font-weight:900;}
+  .login-logo-text span{color:var(--accent);}
+  .login-title{font-family:'Nunito',sans-serif;font-size:18px;font-weight:700;text-align:center;margin-bottom:6px;}
+  .login-sub{font-size:13px;color:var(--muted);text-align:center;margin-bottom:28px;}
+  .login-field{margin-bottom:16px;}
+  .login-field label{display:block;font-size:12px;font-weight:500;color:var(--muted);margin-bottom:7px;text-transform:uppercase;letter-spacing:.5px;}
+  .login-field input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-family:'Inter',sans-serif;font-size:14px;outline:none;transition:border .2s;}
+  .login-field input:focus{border-color:var(--accent);}
+  .login-field input::placeholder{color:var(--muted);}
+  .btn-login{width:100%;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:10px;padding:13px;color:#0f1117;font-family:'Nunito',sans-serif;font-weight:800;font-size:15px;cursor:pointer;margin-top:8px;transition:opacity .2s;}
+  .btn-login:hover{opacity:.88;}
+  .btn-login:disabled{opacity:.5;cursor:not-allowed;}
+  .login-error{background:rgba(240,92,110,.1);border:1px solid rgba(240,92,110,.3);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--red);margin-top:14px;display:none;text-align:center;}
+  .login-error.show{display:block;}
+  #app{display:none;flex:1;}
+  #app.visible{display:flex;flex-direction:column;}
+  .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+  .logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
+  .logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--accent),#2e9e7b);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;}
+  .logo-text{font-family:'Nunito',sans-serif;font-size:20px;font-weight:900;white-space:nowrap;color:var(--text);}
+  .logo-text span{color:var(--accent);}
+  .topbar-right{display:flex;align-items:center;gap:14px;}
+  .user-badge{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:7px;}
+  .role-tag{border-radius:10px;padding:1px 8px;font-size:11px;font-weight:600;background:rgba(79,209,165,.15);color:var(--accent);}
+  .role-tag.admin{background:rgba(245,166,35,.15);color:var(--orange);}
+  .btn-logout{background:none;border:1px solid var(--border);border-radius:8px;padding:5px 12px;color:var(--muted);font-size:12px;cursor:pointer;transition:all .2s;}
+  .btn-logout:hover{border-color:var(--red);color:var(--red);}
+  .app-body{display:flex;flex:1;}
+  .sidebar{width:220px;min-height:calc(100vh - 65px);background:var(--surface);border-right:1px solid var(--border);padding:20px 12px;display:flex;flex-direction:column;gap:4px;flex-shrink:0;}
+  .nav-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;padding:8px 12px 4px;}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:var(--muted);font-size:13px;font-weight:500;text-decoration:none;transition:all .2s;}
+  .nav-item:hover{background:var(--surface2);color:var(--text);}
+  .nav-item.active{background:rgba(79,209,165,.1);color:var(--accent);border:1px solid rgba(79,209,165,.2);}
+  .nav-icon{font-size:16px;width:20px;text-align:center;}
+  .page-content{flex:1;padding:28px 24px;overflow-y:auto;}
+  .page-title{font-family:'Nunito',sans-serif;font-size:22px;font-weight:800;margin-bottom:4px;}
+  .page-sub{font-size:13px;color:var(--muted);margin-bottom:24px;}
+  /* KPI CARDS */
+  .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
+  .kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px 22px;}
+  .kpi-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
+  .kpi-value{font-family:'Nunito',sans-serif;font-size:32px;font-weight:900;}
+  .kpi-sub{font-size:11px;color:var(--muted);margin-top:4px;}
+  .kv-total{color:var(--text);}
+  .kv-pend{color:var(--red);}
+  .kv-rec{color:var(--green);}
+  .kv-post{color:var(--orange);}
+  /* CHART GRID */
+  .chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;}
+  .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px 22px;}
+  .chart-title{font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;}
+  .chart-wrap{position:relative;height:220px;}
+  /* TOP TABLE */
+  .top-table{width:100%;border-collapse:collapse;font-size:13px;}
+  .top-table thead th{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);}
+  .top-table tbody tr{border-bottom:1px solid var(--border);}
+  .top-table tbody tr:last-child{border-bottom:none;}
+  .top-table tbody td{padding:10px 10px;vertical-align:middle;}
+  .rank-num{color:var(--muted);font-size:12px;width:28px;}
+  .bar-bg{background:var(--surface2);border-radius:4px;height:6px;overflow:hidden;width:100%;min-width:60px;}
+  .bar-fill{height:100%;border-radius:4px;background:var(--accent);}
+  .bar-fill-red{background:var(--red);}
+  .toast{position:fixed;bottom:24px;right:24px;background:var(--surface2);border:1px solid var(--accent);border-radius:10px;padding:11px 18px;font-size:13px;color:var(--accent);z-index:999;transform:translateY(80px);opacity:0;transition:all .3s;pointer-events:none;}
+  .toast.show{transform:translateY(0);opacity:1;}
+  .toast.error{border-color:var(--red);color:var(--red);}
+  @media(max-width:900px){.sidebar{display:none;}.kpi-grid{grid-template-columns:1fr 1fr;}.chart-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<div id="loading-overlay"><div class="spin"></div><p>Carregando...</p></div>
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo"><div class="login-logo-icon">💊</div><div class="login-logo-text">Farma<span>Controle</span></div></div>
+    <div class="login-title">Bem-vindo de volta!</div>
+    <div class="login-sub">Entre com seu e-mail e senha para acessar</div>
+    <div class="login-field"><label>E-mail</label><input id="l-email" type="email" placeholder="seu@email.com"></div>
+    <div class="login-field"><label>Senha</label><input id="l-pass" type="password" placeholder="••••••••"></div>
+    <button class="btn-login" id="btn-login" onclick="doLogin()">Entrar</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<div id="app">
+  <div class="topbar">
+    <a class="logo" href="index.html"><div class="logo-icon">💊</div><div class="logo-text">Farma<span>Controle</span></div></a>
+    <div class="topbar-right">
+      <div class="user-badge"><span id="user-email-display"></span><span class="role-tag" id="user-role-tag"></span></div>
+      <button class="btn-logout" onclick="doLogout()">Sair</button>
+    </div>
+  </div>
+  <div class="app-body">
+    <div class="sidebar">
+      <span class="nav-label">Menu</span>
+      <a class="nav-item" href="index.html"><span class="nav-icon">📋</span>Pendências</a>
+      <a class="nav-item active" href="dashboard.html"><span class="nav-icon">📊</span>Dashboard</a>
+      <a class="nav-item" href="relatorios.html"><span class="nav-icon">📄</span>Relatórios</a>
+      <a class="nav-item" href="configuracoes.html"><span class="nav-icon">⚙️</span>Configurações</a>
+    </div>
+    <div class="page-content">
+      <div class="page-title">Dashboard</div>
+      <div class="page-sub">Visão geral das pendências da farmácia</div>
+
+      <div class="kpi-grid">
+        <div class="kpi-card"><div class="kpi-label">Total de Registros</div><div class="kpi-value kv-total" id="kv-total">—</div><div class="kpi-sub">todos os registros</div></div>
+        <div class="kpi-card"><div class="kpi-label">Pendentes</div><div class="kpi-value kv-pend" id="kv-pend">—</div><div class="kpi-sub" id="kv-pend-pct">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">Recebidos</div><div class="kpi-value kv-rec" id="kv-rec">—</div><div class="kpi-sub" id="kv-rec-pct">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">Postergados</div><div class="kpi-value kv-post" id="kv-post">—</div><div class="kpi-sub">com nova data</div></div>
+      </div>
+
+      <div class="chart-grid">
+        <div class="chart-card">
+          <div class="chart-title">Status Geral</div>
+          <div class="chart-wrap"><canvas id="chart-status"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Registros por Dia (últimos 14 dias)</div>
+          <div class="chart-wrap"><canvas id="chart-dias"></canvas></div>
+        </div>
+      </div>
+
+      <div class="chart-grid">
+        <div class="chart-card">
+          <div class="chart-title">Top Balconistas — Pendências</div>
+          <table class="top-table" id="top-balc"></table>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Top Medicamentos — Mais Frequentes</div>
+          <table class="top-table" id="top-med"></table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+  const SUPABASE_URL='https://ubtagborncgbgtlsyqec.supabase.co';
+  const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVidGFnYm9ybmNnYmd0bHN5cWVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NjUwODgsImV4cCI6MjA5MDI0MTA4OH0.tEU-oXG7bzxb1snsp6s1mVThtAtUsQC4x83sUGJfHp4';
+  const ADMIN_EMAIL='gustavo.araujo@reisalves.com.br';
+  const TABLE='pendencias';
+  let currentUser=null,isAdmin=false,authToken=null,records=[];
+
+  function showToast(msg,isError=false){const t=document.getElementById('toast');t.textContent=msg;t.classList.remove('error');if(isError)t.classList.add('error');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+
+  async function doLogin(){
+    const email=document.getElementById('l-email').value.trim();
+    const pass=document.getElementById('l-pass').value;
+    const btn=document.getElementById('btn-login');
+    if(!email||!pass){document.getElementById('login-error').textContent='Preencha os campos.';document.getElementById('login-error').classList.add('show');return;}
+    btn.disabled=true;btn.textContent='Entrando...';
+    try{
+      const res=await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY},body:JSON.stringify({email,password:pass})});
+      const data=await res.json();
+      if(!res.ok||!data.access_token)throw new Error();
+      authToken=data.access_token;currentUser=data.user;isAdmin=currentUser.email===ADMIN_EMAIL;
+      sessionStorage.setItem('fc_token',authToken);sessionStorage.setItem('fc_user',JSON.stringify(currentUser));
+      showApp();
+    }catch(e){document.getElementById('login-error').textContent='E-mail ou senha incorretos.';document.getElementById('login-error').classList.add('show');}
+    finally{btn.disabled=false;btn.textContent='Entrar';}
+  }
+
+  async function doLogout(){
+    try{await fetch(`${SUPABASE_URL}/auth/v1/logout`,{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${authToken}`}});}catch(e){}
+    sessionStorage.clear();window.location.href='index.html';
+  }
+
+  function showApp(){
+    document.getElementById('login-screen').classList.remove('visible');
+    document.getElementById('app').classList.add('visible');
+    document.getElementById('loading-overlay').style.display='none';
+    document.getElementById('user-email-display').textContent=currentUser.email.split('@')[0];
+    const tag=document.getElementById('user-role-tag');
+    tag.textContent=isAdmin?'👑 Admin':'👤 Balconista';isAdmin?tag.classList.add('admin'):tag.classList.remove('admin');
+    loadDashboard();
+  }
+
+  async function tryRestoreSession(){
+    const token=sessionStorage.getItem('fc_token');const user=sessionStorage.getItem('fc_user');
+    if(token&&user){
+      try{
+        const res=await fetch(`${SUPABASE_URL}/auth/v1/user`,{headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${token}`}});
+        if(res.ok){authToken=token;currentUser=JSON.parse(user);isAdmin=currentUser.email===ADMIN_EMAIL;showApp();return;}
+      }catch(e){}
+    }
+    document.getElementById('loading-overlay').style.display='none';
+    document.getElementById('login-screen').classList.add('visible');
+  }
+
+  async function loadDashboard(){
+    try{
+      const res=await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?order=created_at.asc`,{headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':`Bearer ${authToken||SUPABASE_KEY}`}});
+      records=await res.json();
+      buildKPIs();buildCharts();
+    }catch(e){showToast('Erro ao carregar dados.',true);}
+  }
+
+  function buildKPIs(){
+    const total=records.length;
+    const pend=records.filter(r=>r.status==='pendente').length;
+    const rec=records.filter(r=>r.status==='recebido').length;
+    const post=records.filter(r=>r.data_postergada).length;
+    document.getElementById('kv-total').textContent=total;
+    document.getElementById('kv-pend').textContent=pend;
+    document.getElementById('kv-rec').textContent=rec;
+    document.getElementById('kv-post').textContent=post;
+    document.getElementById('kv-pend-pct').textContent=total?`${Math.round(pend/total*100)}% do total`:'—';
+    document.getElementById('kv-rec-pct').textContent=total?`${Math.round(rec/total*100)}% do total`:'—';
+  }
+
+  let chartStatus=null,chartDias=null;
+  function buildCharts(){
+    const pend=records.filter(r=>r.status==='pendente').length;
+    const rec=records.filter(r=>r.status==='recebido').length;
+
+    // Donut status
+    if(chartStatus)chartStatus.destroy();
+    chartStatus=new Chart(document.getElementById('chart-status'),{
+      type:'doughnut',
+      data:{labels:['Pendentes','Recebidos'],datasets:[{data:[pend,rec],backgroundColor:['rgba(240,92,110,.8)','rgba(79,209,165,.8)'],borderColor:['#f05c6e','#4fd1a5'],borderWidth:2}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#7880a0',font:{family:'Inter',size:12},padding:16}}}}
+    });
+
+    // Line chart últimos 14 dias
+    const today=new Date();
+    const labels=[],counts=[];
+    for(let i=13;i>=0;i--){
+      const d=new Date(today);d.setDate(d.getDate()-i);
+      const ds=d.toISOString().split('T')[0];
+      labels.push(d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}));
+      counts.push(records.filter(r=>r.data_venda===ds).length);
+    }
+    if(chartDias)chartDias.destroy();
+    chartDias=new Chart(document.getElementById('chart-dias'),{
+      type:'bar',
+      data:{labels,datasets:[{label:'Registros',data:counts,backgroundColor:'rgba(79,209,165,.6)',borderColor:'#4fd1a5',borderWidth:1,borderRadius:4}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#7880a0',font:{size:10}},grid:{color:'#2a3045'}},y:{ticks:{color:'#7880a0',stepSize:1},grid:{color:'#2a3045'}}}}
+    });
+
+    // Top balconistas pendentes
+    const balcMap={};
+    records.filter(r=>r.status==='pendente').forEach(r=>{balcMap[r.balconista]=(balcMap[r.balconista]||0)+1;});
+    const balcSorted=Object.entries(balcMap).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    const maxBalc=balcSorted[0]?balcSorted[0][1]:1;
+    document.getElementById('top-balc').innerHTML=`<thead><tr><th>#</th><th>Balconista</th><th>Pendências</th><th style="width:100px"></th></tr></thead><tbody>${balcSorted.map(([n,v],i)=>`<tr><td class="rank-num">${i+1}</td><td style="font-size:13px">${n}</td><td style="color:var(--red);font-weight:600">${v}</td><td><div class="bar-bg"><div class="bar-fill bar-fill-red" style="width:${Math.round(v/maxBalc*100)}%"></div></div></td></tr>`).join('')}</tbody>`;
+
+    // Top medicamentos
+    const medMap={};
+    records.forEach(r=>{
+      const itens=r.itens&&r.itens.length>0?r.itens:[r.medicamento];
+      itens.forEach(m=>{if(m)medMap[m]=(medMap[m]||0)+1;});
+    });
+    const medSorted=Object.entries(medMap).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    const maxMed=medSorted[0]?medSorted[0][1]:1;
+    document.getElementById('top-med').innerHTML=`<thead><tr><th>#</th><th>Medicamento</th><th>Qtd</th><th style="width:100px"></th></tr></thead><tbody>${medSorted.map(([n,v],i)=>`<tr><td class="rank-num">${i+1}</td><td style="font-size:12px;color:#9fb3d4">${n}</td><td style="color:var(--accent);font-weight:600">${v}</td><td><div class="bar-bg"><div class="bar-fill" style="width:${Math.round(v/maxMed*100)}%"></div></div></td></tr>`).join('')}</tbody>`;
+  }
+
+  document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('login-screen').classList.contains('visible'))doLogin();});
+  tryRestoreSession();
+</script>
+</body>
+</html>

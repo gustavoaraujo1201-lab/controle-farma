@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FarmaControle — Configurações</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0f1117;--surface:#181c27;--surface2:#1f2535;--border:#2a3045;--accent:#4fd1a5;--accent2:#3bb88e;--red:#f05c6e;--orange:#f5a623;--green:#4fd1a5;--text:#e8eaf2;--muted:#7880a0;--white:#fff;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;display:flex;flex-direction:column;}
+  #loading-overlay{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:16px;}
+  .spin{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  #loading-overlay p{color:var(--muted);font-size:14px;}
+  #login-screen{display:none;position:fixed;inset:0;background:var(--bg);align-items:center;justify-content:center;z-index:500;}
+  #login-screen.visible{display:flex;}
+  .login-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:44px 40px;width:100%;max-width:400px;}
+  .login-logo{display:flex;align-items:center;gap:12px;margin-bottom:32px;justify-content:center;}
+  .login-logo-icon{width:44px;height:44px;background:linear-gradient(135deg,var(--accent),#2e9e7b);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;}
+  .login-logo-text{font-family:'Nunito',sans-serif;font-size:26px;font-weight:900;}
+  .login-logo-text span{color:var(--accent);}
+  .login-title{font-family:'Nunito',sans-serif;font-size:18px;font-weight:700;text-align:center;margin-bottom:6px;}
+  .login-sub{font-size:13px;color:var(--muted);text-align:center;margin-bottom:28px;}
+  .login-field{margin-bottom:16px;}
+  .login-field label{display:block;font-size:12px;font-weight:500;color:var(--muted);margin-bottom:7px;text-transform:uppercase;letter-spacing:.5px;}
+  .login-field input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-family:'Inter',sans-serif;font-size:14px;outline:none;transition:border .2s;}
+  .login-field input:focus{border-color:var(--accent);}
+  .login-field input::placeholder{color:var(--muted);}
+  .btn-login{width:100%;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:10px;padding:13px;color:#0f1117;font-family:'Nunito',sans-serif;font-weight:800;font-size:15px;cursor:pointer;margin-top:8px;}
+  .btn-login:disabled{opacity:.5;}
+  .login-error{background:rgba(240,92,110,.1);border:1px solid rgba(240,92,110,.3);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--red);margin-top:14px;display:none;text-align:center;}
+  .login-error.show{display:block;}
+  #app{display:none;flex:1;}
+  #app.visible{display:flex;flex-direction:column;}
+  .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+  .logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
+  .logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--accent),#2e9e7b);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;}
+  .logo-text{font-family:'Nunito',sans-serif;font-size:20px;font-weight:900;white-space:nowrap;color:var(--text);}
+  .logo-text span{color:var(--accent);}
+  .topbar-right{display:flex;align-items:center;gap:14px;}
+  .user-badge{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:7px;}
+  .role-tag{border-radius:10px;padding:1px 8px;font-size:11px;font-weight:600;background:rgba(79,209,165,.15);color:var(--accent);}
+  .role-tag.admin{background:rgba(245,166,35,.15);color:var(--orange);}
+  .btn-logout{background:none;border:1px solid var(--border);border-radius:8px;padding:5px 12px;color:var(--muted);font-size:12px;cursor:pointer;transition:all .2s;}
+  .btn-logout:hover{border-color:var(--red);color:var(--red);}
+  .app-body{display:flex;flex:1;}
+  .sidebar{width:220px;min-height:calc(100vh - 65px);background:var(--surface);border-right:1px solid var(--border);padding:20px 12px;display:flex;flex-direction:column;gap:4px;flex-shrink:0;}
+  .nav-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;padding:8px 12px 4px;}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:var(--muted);font-size:13px;font-weight:500;text-decoration:none;transition:all .2s;}
+  .nav-item:hover{background:var(--surface2);color:var(--text);}
+  .nav-item.active{background:rgba(79,209,165,.1);color:var(--accent);border:1px solid rgba(79,209,165,.2);}
+  .nav-icon{font-size:16px;width:20px;text-align:center;}
+  .page-content{flex:1;padding:28px 24px;overflow-y:auto;}
+  .page-title{font-family:'Nunito',sans-serif;font-size:22px;font-weight:800;margin-bottom:4px;}
+  .page-sub{font-size:13px;color:var(--muted);margin-bottom:24px;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px;margin-bottom:22px;}
+  .card-title{font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;}
+  .section-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:12px;font-weight:500;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;}
+  .field input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 13px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;outline:none;transition:border .2s;}
+  .field input:focus{border-color:var(--accent);}
+  .field input::placeholder{color:var(--muted);}
+  .field input:disabled{opacity:.5;cursor:not-allowed;}
+  .btn-save{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:10px;padding:10px 22px;color:#0f1117;font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:opacity .2s;}
+  .btn-save:hover{opacity:.88;}
+  .btn-save:disabled{opacity:.4;cursor:not-allowed;}
+  .info-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);}
+  .info-row:last-child{border-bottom:none;}
+  .info-label{font-size:13px;color:var(--muted);}
+  .info-value{font-size:13px;font-weight:500;color:var(--text);}
+  .admin-only-notice{background:rgba(245,166,35,.08);border:1px solid rgba(245,166,35,.2);border-radius:10px;padding:14px 18px;font-size:13px;color:var(--orange);margin-bottom:20px;display:none;}
+  .admin-only-notice.show{display:block;}
+  .users-list{display:flex;flex-direction:column;gap:8px;}
+  .user-item{display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;}
+  .user-info{display:flex;flex-direction:column;gap:2px;}
+  .user-email{font-size:13px;font-weight:500;color:var(--text);}
+  .user-role{font-size:11px;color:var(--muted);}
+  .new-user-form{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end;margin-top:16px;}
+  .toast{position:fixed;bottom:24px;right:24px;background:var(--surface2);border:1px solid var(--accent);border-radius:10px;padding:11px 18px;font-size:13px;color:var(--accent);z-index:999;transform:translateY(80px);opacity:0;transition:all .3s;pointer-events:none;}
+  .toast.show{transform:translateY(0);opacity:1;}
+  .toast.error{border-color:var(--red);color:var(--red);}
+  @media(max-width:900px){.sidebar{display:none;}.section-grid{grid-template-columns:1fr;}.new-user-form{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div id="loading-overlay"><div class="spin"></div><p>Carregando...</p></div>
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo"><div class="login-logo-icon">💊</div><div class="login-logo-text">Farma<span>Controle</span></div></div>
+    <div class="login-title">Bem-vindo de volta!</div>
+    <div class="login-sub">Entre com seu e-mail e senha para acessar</div>
+    <div class="login-field"><label>E-mail</label><input id="l-email" type="email" placeholder="seu@email.com"></div>
+    <div class="login-field"><label>Senha</label><input id="l-pass" type="password" placeholder="••••••••"></div>
+    <button class="btn-login" id="btn-login" onclick="doLogin()">Entrar</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<div id="app">
+  <div class="topbar">
+    <a class="logo" href="index.html"><div class="logo-icon">💊</div><div class="logo-text">Farma<span>Controle</span></div></a>
+    <div class="topbar-right">
+      <div class="user-badge"><span id="user-email-display"></span><span class="role-tag" id="user-role-tag"></span></div>
+      <button class="btn-logout" onclick="doLogout()">Sair</button>
+    </div>
+  </div>
+  <div class="app-body">
+    <div class="sidebar">
+      <span class="nav-label">Menu</span>
+      <a class="nav-item" href="index.html"><span class="nav-icon">📋</span>Pendências</a>
+      <a class="nav-item" href="dashboard.html"><span class="nav-icon">📊</span>Dashboard</a>
+      <a class="nav-item" href="relatorios.html"><span class="nav-icon">📄</span>Relatórios</a>
+      <a class="nav-item active" href="configuracoes.html"><span class="nav-icon">⚙️</span>Configurações</a>
+    </div>
+    <div class="page-content">
+      <div class="page-title">Configurações</div>
+      <div class="page-sub">Gerencie sua conta e usuários do sistema</div>
+
+      <div class="section-grid">
+        <!-- Minha Conta -->
+        <div class="card">
+          <div class="card-title">👤 Minha Conta</div>
+          <div class="field"><label>E-mail</label><input type="email" id="c-email" disabled></div>
+          <div class="field"><label>Nova Senha</label><input type="password" id="c-pass" placeholder="Nova senha..."></div>
+          <div class="field"><label>Confirmar Nova Senha</label><input type="password" id="c-pass2" placeholder="Repita a senha..."></div>
+          <button class="btn-save" onclick="changePassword()">Salvar Senha</button>
+        </div>
+
+        <!-- Info do Sistema -->
+        <div class="card">
+          <div class="card-title">ℹ️ Informações do Sistema</div>
+          <div class="info-row"><span class="info-label">Aplicação</span><span class="info-value">FarmaControle</span></div>
+          <div class="info-row"><span class="info-label">Versão</span><span class="info-value">2.0.0</span></div>
+          <div class="info-row"><span class="info-label">Banco de Dados</span><span class="info-value">Supabase (PostgreSQL)</span></div>
+          <div class="info-row"><span class="info-label">Hospedagem</span><span class="info-value">Vercel</span></div>
+          <div class="info-row"><span class="info-label">Perfil</span><span class="info-value" id="info-perfil">—</span></div>
+          <div class="info-row"><span class="info-label">E-mail Admin</span><span class="info-value" style="font-size:12px;color:var(--muted)">gustavo.araujo@reisalves.com.br</span></div>
+        </div>
+      </div>
+
+      <!-- Gestão de Usuários (admin only) -->
+      <div class="card" id="users-card">
+        <div class="card-title">👥 Convidar Novo Usuário <span style="font-size:11px;color:var(--orange);font-weight:400">(somente admin)</span></div>
+        <div class="admin-only-notice" id="admin-notice">⛔ Apenas o administrador pode convidar usuários.</div>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Envie um convite para que o usuário possa acessar o sistema. Ele receberá um e-mail para criar a senha.</p>
+        <div class="new-user-form">
+          <div class="field" style="margin:0"><label>E-mail do Novo Usuário</label><input type="email" id="new-email" placeholder="email@farmacia.com" id="new-user-email"></div>
+          <div class="field" style="margin:0"><label>Senha Inicial</label><input type="password" id="new-pass" placeholder="Mínimo 6 caracteres"></div>
+          <div class="field" style="margin:0"><label>&nbsp;</label><button class="btn-save" id="btn-invite" onclick="inviteUser()">+ Convidar</button></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+  const SUPABASE_URL='https://ubtagborncgbgtlsyqec.supabase.co';
+  const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVidGFnYm9ybmNnYmd0bHN5cWVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NjUwODgsImV4cCI6MjA5MDI0MTA4OH0.tEU-oXG7bzxb1snsp6s1mVThtAtUsQC4x83sUGJfHp4';
+  const ADMIN_EMAIL='gustavo.araujo@reisalves.com.br';
+  let currentUser=null,isAdmin=false,authToken=null;
+
+  function showToast(msg,isError=false){const t=document.getElementById('toast');t.textContent=msg;t.classList.remove('error');if(isError)t.classList.add('error');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+
+  async function doLogin(){
+    const email=document.getElementById('l-email').value.trim();
+    const pass=document.getElementById('l-pass').value;
+    const btn=document.getElementById('btn-login');
+    btn.disabled=true;btn.textContent='Entrando...';
+    try{
+      const res=await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY},body:JSON.stringify({email,password:pass})});
+      const data=await res.json();
+      if(!res.ok||!data.access_token)throw new Error();
+      authToken=data.access_token;currentUser=data.user;isAdmin=currentUser.email===ADMIN_EMAIL;
+      sessionStorage.setItem('fc_token',authToken);sessionStorage.setItem('fc_user',JSON.stringify(currentUser));
+      showApp();
+    }catch(e){document.getElementById('login-error').textContent='E-mail ou senha incorretos.';document.getElementById('login-error').classList.add('show');}
+    finally{btn.disabled=false;btn.textContent='Entrar';}
+  }
+
+  async function doLogout(){
+    try{await fetch(`${SUPABASE_URL}/auth/v1/logout`,{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${authToken}`}});}catch(e){}
+    sessionStorage.clear();window.location.href='index.html';
+  }
+
+  function showApp(){
+    document.getElementById('login-screen').classList.remove('visible');
+    document.getElementById('app').classList.add('visible');
+    document.getElementById('loading-overlay').style.display='none';
+    document.getElementById('user-email-display').textContent=currentUser.email.split('@')[0];
+    const tag=document.getElementById('user-role-tag');
+    tag.textContent=isAdmin?'👑 Admin':'👤 Balconista';isAdmin?tag.classList.add('admin'):tag.classList.remove('admin');
+    // fill account info
+    document.getElementById('c-email').value=currentUser.email;
+    document.getElementById('info-perfil').textContent=isAdmin?'👑 Administrador':'👤 Balconista';
+    if(!isAdmin){
+      document.getElementById('admin-notice').classList.add('show');
+      document.getElementById('new-email').disabled=true;
+      document.getElementById('new-pass').disabled=true;
+      document.getElementById('btn-invite').disabled=true;
+    }
+  }
+
+  async function tryRestoreSession(){
+    const token=sessionStorage.getItem('fc_token');const user=sessionStorage.getItem('fc_user');
+    if(token&&user){
+      try{
+        const res=await fetch(`${SUPABASE_URL}/auth/v1/user`,{headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${token}`}});
+        if(res.ok){authToken=token;currentUser=JSON.parse(user);isAdmin=currentUser.email===ADMIN_EMAIL;showApp();return;}
+      }catch(e){}
+    }
+    document.getElementById('loading-overlay').style.display='none';
+    document.getElementById('login-screen').classList.add('visible');
+  }
+
+  async function changePassword(){
+    const pass=document.getElementById('c-pass').value;
+    const pass2=document.getElementById('c-pass2').value;
+    if(!pass){showToast('Digite a nova senha.',true);return;}
+    if(pass.length<6){showToast('A senha deve ter pelo menos 6 caracteres.',true);return;}
+    if(pass!==pass2){showToast('As senhas não coincidem.',true);return;}
+    try{
+      const res=await fetch(`${SUPABASE_URL}/auth/v1/user`,{method:'PUT',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':`Bearer ${authToken}`},body:JSON.stringify({password:pass})});
+      if(!res.ok)throw new Error();
+      showToast('✅ Senha alterada com sucesso!');
+      document.getElementById('c-pass').value='';document.getElementById('c-pass2').value='';
+    }catch(e){showToast('Erro ao alterar senha.',true);}
+  }
+
+  async function inviteUser(){
+    if(!isAdmin){showToast('⛔ Apenas admin pode convidar.',true);return;}
+    const email=document.getElementById('new-email').value.trim();
+    const pass=document.getElementById('new-pass').value;
+    if(!email||!pass){showToast('Preencha e-mail e senha.',true);return;}
+    if(pass.length<6){showToast('A senha deve ter pelo menos 6 caracteres.',true);return;}
+    const btn=document.getElementById('btn-invite');
+    btn.disabled=true;btn.textContent='Criando...';
+    try{
+      // Supabase admin signup via anon — creates user
+      const res=await fetch(`${SUPABASE_URL}/auth/v1/signup`,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY},body:JSON.stringify({email,password:pass})});
+      const data=await res.json();
+      if(!res.ok)throw new Error(data.msg||data.error_description||'Erro');
+      showToast(`✅ Usuário ${email} criado com sucesso!`);
+      document.getElementById('new-email').value='';document.getElementById('new-pass').value='';
+    }catch(e){showToast('Erro: '+e.message,true);}
+    finally{btn.disabled=false;btn.textContent='+ Convidar';}
+  }
+
+  document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('login-screen').classList.contains('visible'))doLogin();});
+  tryRestoreSession();
+</script>
+</body>
+</html>

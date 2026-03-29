@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FarmaControle — Relatórios</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0f1117;--surface:#181c27;--surface2:#1f2535;--border:#2a3045;--accent:#4fd1a5;--accent2:#3bb88e;--red:#f05c6e;--orange:#f5a623;--green:#4fd1a5;--text:#e8eaf2;--muted:#7880a0;--white:#fff;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;display:flex;flex-direction:column;}
+  #loading-overlay{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:16px;}
+  .spin{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  #loading-overlay p{color:var(--muted);font-size:14px;}
+  #login-screen{display:none;position:fixed;inset:0;background:var(--bg);align-items:center;justify-content:center;z-index:500;}
+  #login-screen.visible{display:flex;}
+  .login-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:44px 40px;width:100%;max-width:400px;}
+  .login-logo{display:flex;align-items:center;gap:12px;margin-bottom:32px;justify-content:center;}
+  .login-logo-icon{width:44px;height:44px;background:linear-gradient(135deg,var(--accent),#2e9e7b);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;}
+  .login-logo-text{font-family:'Nunito',sans-serif;font-size:26px;font-weight:900;}
+  .login-logo-text span{color:var(--accent);}
+  .login-title{font-family:'Nunito',sans-serif;font-size:18px;font-weight:700;text-align:center;margin-bottom:6px;}
+  .login-sub{font-size:13px;color:var(--muted);text-align:center;margin-bottom:28px;}
+  .login-field{margin-bottom:16px;}
+  .login-field label{display:block;font-size:12px;font-weight:500;color:var(--muted);margin-bottom:7px;text-transform:uppercase;letter-spacing:.5px;}
+  .login-field input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-family:'Inter',sans-serif;font-size:14px;outline:none;transition:border .2s;}
+  .login-field input:focus{border-color:var(--accent);}
+  .login-field input::placeholder{color:var(--muted);}
+  .btn-login{width:100%;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:10px;padding:13px;color:#0f1117;font-family:'Nunito',sans-serif;font-weight:800;font-size:15px;cursor:pointer;margin-top:8px;}
+  .btn-login:disabled{opacity:.5;}
+  .login-error{background:rgba(240,92,110,.1);border:1px solid rgba(240,92,110,.3);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--red);margin-top:14px;display:none;text-align:center;}
+  .login-error.show{display:block;}
+  #app{display:none;flex:1;}
+  #app.visible{display:flex;flex-direction:column;}
+  .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+  .logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
+  .logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--accent),#2e9e7b);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;}
+  .logo-text{font-family:'Nunito',sans-serif;font-size:20px;font-weight:900;white-space:nowrap;color:var(--text);}
+  .logo-text span{color:var(--accent);}
+  .topbar-right{display:flex;align-items:center;gap:14px;}
+  .user-badge{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:7px;}
+  .role-tag{border-radius:10px;padding:1px 8px;font-size:11px;font-weight:600;background:rgba(79,209,165,.15);color:var(--accent);}
+  .role-tag.admin{background:rgba(245,166,35,.15);color:var(--orange);}
+  .btn-logout{background:none;border:1px solid var(--border);border-radius:8px;padding:5px 12px;color:var(--muted);font-size:12px;cursor:pointer;transition:all .2s;}
+  .btn-logout:hover{border-color:var(--red);color:var(--red);}
+  .app-body{display:flex;flex:1;}
+  .sidebar{width:220px;min-height:calc(100vh - 65px);background:var(--surface);border-right:1px solid var(--border);padding:20px 12px;display:flex;flex-direction:column;gap:4px;flex-shrink:0;}
+  .nav-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;padding:8px 12px 4px;}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:var(--muted);font-size:13px;font-weight:500;text-decoration:none;transition:all .2s;}
+  .nav-item:hover{background:var(--surface2);color:var(--text);}
+  .nav-item.active{background:rgba(79,209,165,.1);color:var(--accent);border:1px solid rgba(79,209,165,.2);}
+  .nav-icon{font-size:16px;width:20px;text-align:center;}
+  .page-content{flex:1;padding:28px 24px;overflow-y:auto;}
+  .page-title{font-family:'Nunito',sans-serif;font-size:22px;font-weight:800;margin-bottom:4px;}
+  .page-sub{font-size:13px;color:var(--muted);margin-bottom:24px;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px;margin-bottom:22px;}
+  .card-title{font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;}
+  .filter-row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;}
+  .fld{display:flex;flex-direction:column;gap:5px;}
+  .fld label{font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+  .fld input,.fld select{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;outline:none;transition:border .2s;color-scheme:dark;}
+  .fld input:focus,.fld select:focus{border-color:var(--accent);}
+  .fld select option{background:var(--surface2);}
+  .btn-filter{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:8px;padding:9px 20px;color:#0f1117;font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:opacity .2s;}
+  .btn-filter:hover{opacity:.88;}
+  .btn-export{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 18px;color:var(--text);font-size:13px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:600;display:flex;align-items:center;gap:6px;transition:all .2s;}
+  .btn-export:hover{border-color:var(--accent);color:var(--accent);}
+  .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+  table{width:100%;border-collapse:collapse;}
+  thead th{padding:12px 13px;text-align:left;font-family:'Nunito',sans-serif;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;background:var(--surface2);border-bottom:1px solid var(--border);}
+  tbody tr{border-bottom:1px solid var(--border);transition:background .15s;}
+  tbody tr:last-child{border-bottom:none;}
+  tbody tr:hover{background:var(--surface2);}
+  tbody td{padding:12px 13px;font-size:13px;vertical-align:middle;}
+  .badge-p{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;background:rgba(240,92,110,.12);color:var(--red);border:1px solid rgba(240,92,110,.3);}
+  .badge-r{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;background:rgba(79,209,165,.12);color:var(--green);border:1px solid rgba(79,209,165,.3);}
+  .result-info{font-size:13px;color:var(--muted);margin-bottom:12px;}
+  .empty{text-align:center;padding:48px 20px;color:var(--muted);}
+  .empty-icon{font-size:40px;margin-bottom:10px;}
+  .toast{position:fixed;bottom:24px;right:24px;background:var(--surface2);border:1px solid var(--accent);border-radius:10px;padding:11px 18px;font-size:13px;color:var(--accent);z-index:999;transform:translateY(80px);opacity:0;transition:all .3s;pointer-events:none;}
+  .toast.show{transform:translateY(0);opacity:1;}
+  .toast.error{border-color:var(--red);color:var(--red);}
+  @media(max-width:900px){.sidebar{display:none;}.filter-row{flex-direction:column;}}
+</style>
+</head>
+<body>
+<div id="loading-overlay"><div class="spin"></div><p>Carregando...</p></div>
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo"><div class="login-logo-icon">💊</div><div class="login-logo-text">Farma<span>Controle</span></div></div>
+    <div class="login-title">Bem-vindo de volta!</div>
+    <div class="login-sub">Entre com seu e-mail e senha para acessar</div>
+    <div class="login-field"><label>E-mail</label><input id="l-email" type="email" placeholder="seu@email.com"></div>
+    <div class="login-field"><label>Senha</label><input id="l-pass" type="password" placeholder="••••••••"></div>
+    <button class="btn-login" id="btn-login" onclick="doLogin()">Entrar</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<div id="app">
+  <div class="topbar">
+    <a class="logo" href="index.html"><div class="logo-icon">💊</div><div class="logo-text">Farma<span>Controle</span></div></a>
+    <div class="topbar-right">
+      <div class="user-badge"><span id="user-email-display"></span><span class="role-tag" id="user-role-tag"></span></div>
+      <button class="btn-logout" onclick="doLogout()">Sair</button>
+    </div>
+  </div>
+  <div class="app-body">
+    <div class="sidebar">
+      <span class="nav-label">Menu</span>
+      <a class="nav-item" href="index.html"><span class="nav-icon">📋</span>Pendências</a>
+      <a class="nav-item" href="dashboard.html"><span class="nav-icon">📊</span>Dashboard</a>
+      <a class="nav-item active" href="relatorios.html"><span class="nav-icon">📄</span>Relatórios</a>
+      <a class="nav-item" href="configuracoes.html"><span class="nav-icon">⚙️</span>Configurações</a>
+    </div>
+    <div class="page-content">
+      <div class="page-title">Relatórios</div>
+      <div class="page-sub">Filtre e exporte o histórico de pendências</div>
+
+      <div class="card">
+        <div class="card-title">Filtros</div>
+        <div class="filter-row">
+          <div class="fld"><label>Data Início</label><input type="date" id="f-de" color-scheme="dark"></div>
+          <div class="fld"><label>Data Fim</label><input type="date" id="f-ate"></div>
+          <div class="fld"><label>Status</label>
+            <select id="f-status">
+              <option value="todos">Todos</option>
+              <option value="pendente">Pendentes</option>
+              <option value="recebido">Recebidos</option>
+            </select>
+          </div>
+          <div class="fld"><label>Balconista</label><input type="text" id="f-balc" placeholder="Nome..."></div>
+          <div class="fld"><label>&nbsp;</label><button class="btn-filter" onclick="applyFilter()">🔍 Filtrar</button></div>
+          <div class="fld"><label>&nbsp;</label><button class="btn-export" onclick="exportCSV()">📥 Exportar CSV</button></div>
+          <div class="fld"><label>&nbsp;</label><button class="btn-export" onclick="exportPrint()">🖨️ Imprimir</button></div>
+        </div>
+      </div>
+
+      <div class="result-info" id="result-info"></div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>Balconista</th><th>Medicamento(s)</th><th>Cliente</th><th>Observação</th><th>Data Venda</th><th>Postergada</th><th>Status</th></tr></thead>
+          <tbody id="rel-tbody"></tbody>
+        </table>
+        <div id="rel-empty" class="empty" style="display:none"><div class="empty-icon">📄</div><p>Nenhum registro encontrado.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+  const SUPABASE_URL='https://ubtagborncgbgtlsyqec.supabase.co';
+  const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVidGFnYm9ybmNnYmd0bHN5cWVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NjUwODgsImV4cCI6MjA5MDI0MTA4OH0.tEU-oXG7bzxb1snsp6s1mVThtAtUsQC4x83sUGJfHp4';
+  const ADMIN_EMAIL='gustavo.araujo@reisalves.com.br';
+  const TABLE='pendencias';
+  let currentUser=null,isAdmin=false,authToken=null,allRecords=[],filtered=[];
+
+  function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function fromInputDate(s){if(!s)return'';const[y,m,d]=s.split('-');return`${d}/${m}/${y}`;}
+  function showToast(msg,isError=false){const t=document.getElementById('toast');t.textContent=msg;t.classList.remove('error');if(isError)t.classList.add('error');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+
+  async function doLogin(){
+    const email=document.getElementById('l-email').value.trim();
+    const pass=document.getElementById('l-pass').value;
+    const btn=document.getElementById('btn-login');
+    btn.disabled=true;btn.textContent='Entrando...';
+    try{
+      const res=await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY},body:JSON.stringify({email,password:pass})});
+      const data=await res.json();
+      if(!res.ok||!data.access_token)throw new Error();
+      authToken=data.access_token;currentUser=data.user;isAdmin=currentUser.email===ADMIN_EMAIL;
+      sessionStorage.setItem('fc_token',authToken);sessionStorage.setItem('fc_user',JSON.stringify(currentUser));
+      showApp();
+    }catch(e){document.getElementById('login-error').textContent='E-mail ou senha incorretos.';document.getElementById('login-error').classList.add('show');}
+    finally{btn.disabled=false;btn.textContent='Entrar';}
+  }
+
+  async function doLogout(){
+    try{await fetch(`${SUPABASE_URL}/auth/v1/logout`,{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${authToken}`}});}catch(e){}
+    sessionStorage.clear();window.location.href='index.html';
+  }
+
+  function showApp(){
+    document.getElementById('login-screen').classList.remove('visible');
+    document.getElementById('app').classList.add('visible');
+    document.getElementById('loading-overlay').style.display='none';
+    document.getElementById('user-email-display').textContent=currentUser.email.split('@')[0];
+    const tag=document.getElementById('user-role-tag');
+    tag.textContent=isAdmin?'👑 Admin':'👤 Balconista';isAdmin?tag.classList.add('admin'):tag.classList.remove('admin');
+    // set default dates (last 30 days)
+    const today=new Date(),ago=new Date();ago.setDate(ago.getDate()-30);
+    document.getElementById('f-de').value=ago.toISOString().split('T')[0];
+    document.getElementById('f-ate').value=today.toISOString().split('T')[0];
+    loadAndFilter();
+  }
+
+  async function tryRestoreSession(){
+    const token=sessionStorage.getItem('fc_token');const user=sessionStorage.getItem('fc_user');
+    if(token&&user){
+      try{
+        const res=await fetch(`${SUPABASE_URL}/auth/v1/user`,{headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${token}`}});
+        if(res.ok){authToken=token;currentUser=JSON.parse(user);isAdmin=currentUser.email===ADMIN_EMAIL;showApp();return;}
+      }catch(e){}
+    }
+    document.getElementById('loading-overlay').style.display='none';
+    document.getElementById('login-screen').classList.add('visible');
+  }
+
+  async function loadAndFilter(){
+    try{
+      const res=await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?order=data_venda.desc`,{headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':`Bearer ${authToken||SUPABASE_KEY}`}});
+      allRecords=await res.json();
+      applyFilter();
+    }catch(e){showToast('Erro ao carregar.',true);}
+  }
+
+  function applyFilter(){
+    const de=document.getElementById('f-de').value;
+    const ate=document.getElementById('f-ate').value;
+    const status=document.getElementById('f-status').value;
+    const balc=document.getElementById('f-balc').value.trim().toLowerCase();
+    filtered=allRecords.filter(r=>{
+      if(status!=='todos'&&r.status!==status)return false;
+      if(balc&&!r.balconista.toLowerCase().includes(balc))return false;
+      if(de&&r.data_venda<de)return false;
+      if(ate&&r.data_venda>ate)return false;
+      return true;
+    });
+    renderTable();
+  }
+
+  function renderTable(){
+    const tbody=document.getElementById('rel-tbody');
+    const empty=document.getElementById('rel-empty');
+    document.getElementById('result-info').textContent=`${filtered.length} registro${filtered.length!==1?'s':''} encontrado${filtered.length!==1?'s':''}`;
+    if(filtered.length===0){tbody.innerHTML='';empty.style.display='block';return;}
+    empty.style.display='none';
+    tbody.innerHTML=filtered.map((r,i)=>`
+      <tr>
+        <td style="color:var(--muted);font-size:12px">${i+1}</td>
+        <td style="color:var(--muted)">${esc(r.balconista)}</td>
+        <td style="color:#9fb3d4;font-size:12px">${r.itens&&r.itens.length>0?r.itens.map(x=>esc(x)).join('<br>'):esc(r.medicamento)}</td>
+        <td style="font-weight:500;color:#fff">${esc(r.cliente)}</td>
+        <td style="font-size:11px;color:var(--muted);font-style:italic">${esc(r.observacao||'—')}</td>
+        <td style="font-size:12px;color:var(--muted)">${fromInputDate(r.data_venda)}</td>
+        <td style="font-size:12px;color:var(--orange)">${r.data_postergada?fromInputDate(r.data_postergada):'—'}</td>
+        <td><span class="${r.status==='pendente'?'badge-p':'badge-r'}">${r.status==='pendente'?'Pendente':'Recebido'}</span></td>
+      </tr>`).join('');
+  }
+
+  function exportCSV(){
+    if(filtered.length===0){showToast('Nenhum dado para exportar.');return;}
+    const header=['#','Balconista','Medicamento','Cliente','Observacao','Data Venda','Data Postergada','Status'];
+    const rows=filtered.map((r,i)=>[i+1,r.balconista,r.itens&&r.itens.length>0?r.itens.join(' | '):r.medicamento,r.cliente,r.observacao||'',fromInputDate(r.data_venda),r.data_postergada?fromInputDate(r.data_postergada):'',r.status]);
+    const csv=[header,...rows].map(row=>row.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`farmacontrole_${new Date().toISOString().split('T')[0]}.csv`;a.click();
+    showToast('✅ CSV exportado!');
+  }
+
+  function exportPrint(){
+    const now=new Date();
+    const html=`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Relatório FarmaControle</title><link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"><style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Inter',sans-serif;background:white;color:#1a1a2e;padding:28px 36px 60px;}.header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #1a1a2e;padding-bottom:14px;margin-bottom:20px;}.title{font-family:'Nunito',sans-serif;font-size:22px;font-weight:800;}.sub{font-size:12px;color:#666;margin-top:4px;}.meta{text-align:right;font-size:12px;color:#666;line-height:1.7;}table{width:100%;border-collapse:collapse;font-size:12px;}thead th{background:#1a1a2e;color:#fff;padding:10px;text-align:left;font-family:'Nunito',sans-serif;font-size:10px;text-transform:uppercase;letter-spacing:.5px;}tbody tr:nth-child(even){background:#f5f6f9;}tbody tr{border-bottom:1px solid #e8e8e8;}tbody td{padding:9px 10px;color:#333;vertical-align:top;}.bp{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;background:#fde8ea;color:#c0392b;}.br{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;background:#d4f5eb;color:#1a7a57;}.footer{position:fixed;bottom:0;left:0;right:0;padding:10px 36px;border-top:1px solid #ddd;font-size:11px;color:#aaa;display:flex;justify-content:space-between;background:white;}@page{margin:10mm;}</style></head><body>
+    <div class="header"><div><div class="title">💊 FarmaControle — Relatório</div><div class="sub">Período: ${fromInputDate(document.getElementById('f-de').value)} até ${fromInputDate(document.getElementById('f-ate').value)}</div></div><div class="meta"><div>${now.toLocaleDateString('pt-BR',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div><div>Emitido às ${now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</div></div></div>
+    <table><thead><tr><th>#</th><th>Balconista</th><th>Medicamento(s)</th><th>Cliente</th><th>Observação</th><th>Data Venda</th><th>Postergada</th><th>Status</th></tr></thead>
+    <tbody>${filtered.map((r,i)=>`<tr><td>${i+1}</td><td>${r.balconista}</td><td style="font-size:11px">${r.itens&&r.itens.length>0?r.itens.join('<br>'):r.medicamento}</td><td><strong>${r.cliente}</strong></td><td style="font-size:11px;font-style:italic;color:#888">${r.observacao||'—'}</td><td>${fromInputDate(r.data_venda)}</td><td style="color:#d4880a">${r.data_postergada?fromInputDate(r.data_postergada):'—'}</td><td><span class="${r.status==='pendente'?'bp':'br'}">${r.status==='pendente'?'Pendente':'Recebido'}</span></td></tr>`).join('')}</tbody></table>
+    <div class="footer"><span>FarmaControle — ${filtered.length} registro(s)</span><span>${now.toLocaleDateString('pt-BR')} ${now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</span></div>
+    </body></html>`;
+    const blob=new Blob([html],{type:'text/html'});
+    const w=window.open(URL.createObjectURL(blob),'_blank');
+    w.onload=()=>setTimeout(()=>w.print(),500);
+  }
+
+  document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('login-screen').classList.contains('visible'))doLogin();});
+  tryRestoreSession();
+</script>
+</body>
+</html>
