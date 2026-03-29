@@ -58,25 +58,17 @@
   .page-sub{font-size:13px;color:var(--muted);margin-bottom:24px;}
   /* KPI CARDS */
   .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
-  .kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px 24px;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s;}
-  .kpi-card:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,.3);}
-  .kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
-  .kpi-card-total::before{background:linear-gradient(90deg,var(--muted),var(--border));}
-  .kpi-card-pend::before{background:linear-gradient(90deg,var(--red),#ff8a95);}
-  .kpi-card-rec::before{background:linear-gradient(90deg,var(--accent),var(--accent2));}
-  .kpi-card-post::before{background:linear-gradient(90deg,var(--orange),#ffd166);}
-  .kpi-icon{font-size:22px;margin-bottom:12px;display:block;}
-  .kpi-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;font-weight:600;}
-  .kpi-value{font-family:'Nunito',sans-serif;font-size:36px;font-weight:900;line-height:1;}
-  .kpi-sub{font-size:11px;color:var(--muted);margin-top:6px;}
+  .kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px 22px;}
+  .kpi-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
+  .kpi-value{font-family:'Nunito',sans-serif;font-size:32px;font-weight:900;}
+  .kpi-sub{font-size:11px;color:var(--muted);margin-top:4px;}
   .kv-total{color:var(--text);}
   .kv-pend{color:var(--red);}
   .kv-rec{color:var(--green);}
   .kv-post{color:var(--orange);}
   /* CHART GRID */
   .chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;}
-  .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px 24px;transition:box-shadow .2s;}
-  .chart-card:hover{box-shadow:0 4px 24px rgba(0,0,0,.25);}
+  .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px 22px;}
   .chart-title{font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;}
   .chart-wrap{position:relative;height:220px;}
   /* TOP TABLE */
@@ -121,25 +113,20 @@
   <div class="app-body">
     <div class="sidebar">
       <span class="nav-label">Menu</span>
-      <a class="nav-item active" href="dashboard.html"><span class="nav-icon">📊</span>Dashboard</a>
       <a class="nav-item" href="index.html"><span class="nav-icon">📋</span>Pendências</a>
+      <a class="nav-item active" href="dashboard.html"><span class="nav-icon">📊</span>Dashboard</a>
       <a class="nav-item" href="relatorios.html"><span class="nav-icon">📄</span>Relatórios</a>
       <a class="nav-item" href="configuracoes.html"><span class="nav-icon">⚙️</span>Configurações</a>
     </div>
     <div class="page-content">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
-        <div>
-          <div class="page-title">Dashboard</div>
-          <div class="page-sub" style="margin-bottom:0">Visão geral das pendências da farmácia</div>
-        </div>
-        <button onclick="loadDashboard()" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 16px;color:var(--muted);font-size:12px;font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .2s;" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">🔄 Atualizar</button>
-      </div>
+      <div class="page-title">Dashboard</div>
+      <div class="page-sub">Visão geral das pendências da farmácia</div>
 
       <div class="kpi-grid">
-        <div class="kpi-card kpi-card-total"><span class="kpi-icon">📋</span><div class="kpi-label">Total de Registros</div><div class="kpi-value kv-total" id="kv-total">—</div><div class="kpi-sub">todos os registros</div></div>
-        <div class="kpi-card kpi-card-pend"><span class="kpi-icon">🔴</span><div class="kpi-label">Pendentes</div><div class="kpi-value kv-pend" id="kv-pend">—</div><div class="kpi-sub" id="kv-pend-pct">—</div></div>
-        <div class="kpi-card kpi-card-rec"><span class="kpi-icon">🟢</span><div class="kpi-label">Recebidos</div><div class="kpi-value kv-rec" id="kv-rec">—</div><div class="kpi-sub" id="kv-rec-pct">—</div></div>
-        <div class="kpi-card kpi-card-post"><span class="kpi-icon">🟡</span><div class="kpi-label">Postergados</div><div class="kpi-value kv-post" id="kv-post">—</div><div class="kpi-sub">com nova data</div></div>
+        <div class="kpi-card"><div class="kpi-label">Total de Registros</div><div class="kpi-value kv-total" id="kv-total">—</div><div class="kpi-sub">todos os registros</div></div>
+        <div class="kpi-card"><div class="kpi-label">Pendentes</div><div class="kpi-value kv-pend" id="kv-pend">—</div><div class="kpi-sub" id="kv-pend-pct">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">Recebidos</div><div class="kpi-value kv-rec" id="kv-rec">—</div><div class="kpi-sub" id="kv-rec-pct">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">Postergados</div><div class="kpi-value kv-post" id="kv-post">—</div><div class="kpi-sub">com nova data</div></div>
       </div>
 
       <div class="chart-grid">
@@ -210,13 +197,25 @@
   }
 
   async function tryRestoreSession(){
-    const token=sessionStorage.getItem('fc_token');const user=sessionStorage.getItem('fc_user');
+    const safetyTimer = setTimeout(()=>{
+      document.getElementById('loading-overlay').style.display='none';
+      window.location.href='index.html';
+    }, 5000);
+    const token=sessionStorage.getItem('fc_token');
+    const user=sessionStorage.getItem('fc_user');
     if(token&&user){
       try{
-        const res=await fetch(`${SUPABASE_URL}/auth/v1/user`,{headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${token}`}});
-        if(res.ok){authToken=token;currentUser=JSON.parse(user);isAdmin=currentUser.email===ADMIN_EMAIL;showApp();return;}
+        const res=await fetch(`${SUPABASE_URL}/auth/v1/user`,{
+          headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${token}`},
+          signal: AbortSignal.timeout(4000)
+        });
+        if(res.ok){
+          clearTimeout(safetyTimer);
+          authToken=token;currentUser=JSON.parse(user);isAdmin=currentUser.email===ADMIN_EMAIL;showApp();return;
+        }
       }catch(e){}
     }
+    clearTimeout(safetyTimer);
     document.getElementById('loading-overlay').style.display='none';
     document.getElementById('login-screen').classList.add('visible');
   }

@@ -205,13 +205,28 @@
   }
 
   async function tryRestoreSession(){
-    const token=sessionStorage.getItem('fc_token');const user=sessionStorage.getItem('fc_user');
+    // Timeout de segurança: se travar por mais de 5s, redireciona para login
+    const safetyTimer = setTimeout(()=>{
+      document.getElementById('loading-overlay').style.display='none';
+      window.location.href='index.html';
+    }, 5000);
+
+    const token=sessionStorage.getItem('fc_token');
+    const user=sessionStorage.getItem('fc_user');
     if(token&&user){
       try{
-        const res=await fetch(`${SUPABASE_URL}/auth/v1/user`,{headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${token}`}});
-        if(res.ok){authToken=token;currentUser=JSON.parse(user);isAdmin=currentUser.email===ADMIN_EMAIL;showApp();return;}
+        const res=await fetch(`${SUPABASE_URL}/auth/v1/user`,{
+          headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${token}`},
+          signal: AbortSignal.timeout(4000)
+        });
+        if(res.ok){
+          clearTimeout(safetyTimer);
+          authToken=token;currentUser=JSON.parse(user);isAdmin=currentUser.email===ADMIN_EMAIL;
+          showApp();return;
+        }
       }catch(e){}
     }
+    clearTimeout(safetyTimer);
     document.getElementById('loading-overlay').style.display='none';
     document.getElementById('login-screen').classList.add('visible');
   }
